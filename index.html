@@ -249,7 +249,7 @@
           </div>
           <div>
             <h4 class="fw-bold mb-0 text-white">Live Leaderboard Kelas</h4>
-            <span class="text-secondary small">Point, Group & Spin Manager</span>
+            <span class="text-secondary small" id="syncStatus"><i class="bi bi-cloud-check text-success me-1"></i> Terhubung ke Google Sheets</span>
           </div>
         </div>
 
@@ -258,11 +258,9 @@
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
-          <!-- Tombol Jurnal & Absensi -->
+          <button class="btn btn-outline-light rounded-3 py-2 px-3 fw-bold" onclick="fetchStudentsFromSheet()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh Data</button>
           <a href="absensi.html" class="btn btn-success rounded-3 py-2 px-3 fw-bold"> <i class="bi bi-calendar-check me-1"></i> Absensi </a>
-          <!-- Tombol Spin Wheel -->
           <button class="btn btn-warning rounded-3 py-2 px-3 fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#wheelModal" onclick="initWheel()"><i class="bi bi-disc me-1"></i> Spin Wheel</button>
-          <!-- Tombol Bagi Kelompok -->
           <button class="btn btn-primary rounded-3 py-2 px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#groupModal"><i class="bi bi-shuffle me-1"></i> Kelompok</button>
           <button class="btn btn-outline-danger btn-sm rounded-3 border-opacity-25 py-2 px-3" onclick="resetPoints()"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</button>
         </div>
@@ -273,7 +271,9 @@
 
       <!-- Grid Seluruh Siswa -->
       <h6 class="text-secondary fw-bold text-uppercase mb-3 tracking-wider"><i class="bi bi-people-fill me-2"></i>Daftar Seluruh Murid</h6>
-      <div class="grid-container" id="studentGrid"></div>
+      <div class="grid-container" id="studentGrid">
+        <div class="text-info text-center py-5 w-100 col-span-full"><span class="spinner-border spinner-border-sm me-2"></span>Memuat data dari Google Sheets...</div>
+      </div>
     </div>
 
     <!-- Modal Acak Kelompok -->
@@ -337,6 +337,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+      // GANTI URL INI DENGAN URL APPS SCRIPT DATABASE POIN KAMU
+      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_G4zmCDwok5yfR4EnQt-Zzzy5UZKJwqE0e8NDwIuyp7jOQ0ea1Yv0Km8sN9Zyx12-Qw/exec";
+
       /* ================= SYSTEM SFX (Web Audio API) ================= */
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -443,12 +446,56 @@
         points: 0,
       }));
 
-      // Kunci LocalStorage yang konsisten
-      const STORAGE_KEY = "class_points_v11";
-      let students = JSON.parse(localStorage.getItem(STORAGE_KEY)) || initialStudents;
+      let students = [...initialStudents];
 
-      function saveStudents() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
+      async function fetchStudentsFromSheet() {
+        const syncStatus = document.getElementById("syncStatus");
+        syncStatus.innerHTML = `<i class="bi bi-arrow-repeat text-warning spinner-border spinner-border-sm me-1"></i> Menyinkronkan...`;
+
+        try {
+          const res = await fetch(GOOGLE_SCRIPT_URL);
+          const data = await res.json();
+          if (data && data.length > 0) {
+            students = data;
+          } else {
+            // Jika sheet masih kosong, kirim data awal ke sheet
+            await syncAllToSheet(initialStudents);
+            students = [...initialStudents];
+          }
+          syncStatus.innerHTML = `<i class="bi bi-cloud-check text-success me-1"></i> Terhubung ke Google Sheets`;
+        } catch (err) {
+          console.error("Gagal mengambil data dari Google Sheets:", err);
+          syncStatus.innerHTML = `<i class="bi bi-exclamation-triangle text-danger me-1"></i> Gagal Sinkronisasi`;
+        } finally {
+          renderPodium();
+          renderGrid(getFilteredData());
+        }
+      }
+
+      async function updatePointOnSheet(student) {
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: student.id, name: student.name, points: student.points }),
+          });
+        } catch (err) {
+          console.error("Gagal mengirim update poin ke Google Sheets:", err);
+        }
+      }
+
+      async function syncAllToSheet(dataArray) {
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dataArray),
+          });
+        } catch (err) {
+          console.error("Gagal menyinkronkan seluruh data ke Google Sheets:", err);
+        }
       }
 
       function getInitials(name) {
@@ -522,11 +569,13 @@
         const student = students.find((s) => s.id === id);
         if (student) {
           student.points = Math.max(0, student.points + change);
-          saveStudents(); // Simpan ke localStorage
 
           playSound(change < 0 ? "minus" : "plus");
           renderPodium();
           renderGrid(getFilteredData());
+
+          // Kirim perubahan poin secara background ke Google Sheets
+          updatePointOnSheet(student);
         }
       }
 
@@ -677,17 +726,17 @@
         renderGrid(getFilteredData());
       }
 
-      function resetPoints() {
+      async function resetPoints() {
         if (confirm("Reset semua poin ke 0?")) {
           students.forEach((s) => (s.points = 0));
-          saveStudents(); // Simpan ke localStorage
           renderPodium();
           renderGrid();
+          await syncAllToSheet(students);
         }
       }
 
-      renderPodium();
-      renderGrid();
+      // Ambil data pertama kali saat halaman dimuat
+      fetchStudentsFromSheet();
     </script>
   </body>
 </html>
