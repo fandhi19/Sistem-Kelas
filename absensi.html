@@ -90,12 +90,13 @@
           </div>
           <div>
             <h4 class="fw-bold mb-0 text-white">Jurnal & Presensi Kelas</h4>
-            <span class="text-secondary small">Rekapitulasi Kehadiran Siswa Per Pertemuan</span>
+            <span class="text-secondary small" id="syncStatus"><i class="bi bi-cloud-check text-success me-1"></i> Terhubung ke Google Sheets</span>
           </div>
         </div>
 
         <div class="d-flex gap-2">
-          <a href="index.html" class="btn btn-outline-light rounded-3 py-2 px-3 fw-bold"> <i class="bi bi-arrow-left me-1"></i> Kembali ke Leaderboard </a>
+          <button class="btn btn-outline-light rounded-3 py-2 px-3 fw-bold" onclick="fetchAttendanceFromSheet()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
+          <a href="index.html" class="btn btn-outline-light rounded-3 py-2 px-3 fw-bold"> <i class="bi bi-arrow-left me-1"></i> Leaderboard </a>
           <button class="btn btn-success rounded-3 py-2 px-3 fw-bold" onclick="openNewSessionModal()"><i class="bi bi-plus-circle me-1"></i>Pertemuan Baru</button>
         </div>
       </div>
@@ -106,7 +107,7 @@
           <div class="card-custom p-3 p-md-4">
             <h6 class="fw-bold text-white mb-3"><i class="bi bi-clock-history text-success me-2"></i>Riwayat Pertemuan</h6>
             <div class="list-group list-group-flush gap-2" id="sessionList">
-              <!-- List Tanggal dipopulasi via JS -->
+              <div class="text-info text-center py-3"><span class="spinner-border spinner-border-sm me-2"></span>Memuat riwayat...</div>
             </div>
           </div>
         </div>
@@ -148,6 +149,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+      // GANTI URL INI DENGAN URL APPS SCRIPT KHUSUS ABSENSI KAMU
+      const GOOGLE_SCRIPT_ABSEN_URL = "https://script.google.com/macros/s/AKfycbxH4_e4ZcjoN0SfFcYI1jCyga-bERbuzofcVaA3DfXVTysfA8rjgkV4oIfVdadgNeqsNA/exec";
+
       const sampleNames = [
         "Ainun Risky",
         "Alexander Modegliano Biwada",
@@ -187,17 +191,66 @@
         "Yunita Putri Prasetiya",
       ];
 
-      let attendanceData = JSON.parse(localStorage.getItem("class_attendance_journal_v1")) || [];
+      let attendanceData = [];
       let activeSessionId = null;
 
       document.getElementById("sessionDate").valueAsDate = new Date();
+
+      async function fetchAttendanceFromSheet() {
+        const syncStatus = document.getElementById("syncStatus");
+        syncStatus.innerHTML = `<i class="bi bi-arrow-repeat text-warning spinner-border spinner-border-sm me-1"></i> Menyinkronkan...`;
+
+        try {
+          const res = await fetch(GOOGLE_SCRIPT_ABSEN_URL);
+          const data = await res.json();
+          attendanceData = Array.isArray(data) ? data : [];
+          syncStatus.innerHTML = `<i class="bi bi-cloud-check text-success me-1"></i> Terhubung ke Google Sheets`;
+        } catch (err) {
+          console.error("Gagal mengambil data absensi:", err);
+          syncStatus.innerHTML = `<i class="bi bi-exclamation-triangle text-danger me-1"></i> Gagal Sinkronisasi`;
+        } finally {
+          renderSessionList();
+          if (attendanceData.length > 0) {
+            if (!activeSessionId || !attendanceData.find((s) => s.id === activeSessionId)) {
+              selectSession(attendanceData[0].id);
+            } else {
+              selectSession(activeSessionId);
+            }
+          } else {
+            document.getElementById("attendanceDetailPanel").innerHTML = `
+            <div class="text-center text-secondary py-5">
+              <i class="bi bi-calendar-event fs-1 opacity-50"></i>
+              <p class="mt-2">Pilih atau buat tanggal pertemuan baru di sebelah kiri untuk mengisi presensi.</p>
+            </div>
+          `;
+          }
+        }
+      }
+
+      async function syncToSheet() {
+        const syncStatus = document.getElementById("syncStatus");
+        syncStatus.innerHTML = `<i class="bi bi-arrow-repeat text-warning spinner-border spinner-border-sm me-1"></i> Menyimpan...`;
+
+        try {
+          await fetch(GOOGLE_SCRIPT_ABSEN_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(attendanceData),
+          });
+          syncStatus.innerHTML = `<i class="bi bi-cloud-check text-success me-1"></i> Tersimpan ke Google Sheets`;
+        } catch (err) {
+          console.error("Gagal menyinkronkan absensi:", err);
+          syncStatus.innerHTML = `<i class="bi bi-exclamation-triangle text-danger me-1"></i> Gagal Menyimpan`;
+        }
+      }
 
       function openNewSessionModal() {
         const modal = new bootstrap.Modal(document.getElementById("sessionModal"));
         modal.show();
       }
 
-      function saveNewSession() {
+      async function saveNewSession() {
         const dateVal = document.getElementById("sessionDate").value;
         const noteVal = document.getElementById("sessionNote").value || "Pertemuan Rutin";
 
@@ -213,12 +266,11 @@
           records: sampleNames.map((name, idx) => ({
             id: idx + 1,
             name: name,
-            status: "", // Default Kosong (Belum Diabsen)
+            status: "",
           })),
         };
 
         attendanceData.unshift(newSession);
-        saveToStorage();
 
         const modalEl = document.getElementById("sessionModal");
         const modal = bootstrap.Modal.getInstance(modalEl);
@@ -226,10 +278,7 @@
 
         renderSessionList();
         selectSession(newSession.id);
-      }
-
-      function saveToStorage() {
-        localStorage.setItem("class_attendance_journal_v1", JSON.stringify(attendanceData));
+        await syncToSheet();
       }
 
       function renderSessionList() {
@@ -275,7 +324,6 @@
           year: "numeric",
         });
 
-        // Hitung Rekapitulasi Status
         const counts = { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0, Belum: 0 };
         session.records.forEach((r) => {
           if (counts[r.status] !== undefined) counts[r.status]++;
@@ -329,7 +377,6 @@
           </div>
         </div>
 
-        <!-- Section Widget Rekapitulasi -->
         <div class="row g-2 mb-4">
           <div class="col">
             <div class="rekap-card border-success border-opacity-25">
@@ -380,26 +427,26 @@
       `;
       }
 
-      function updateStudentStatus(studentId, newStatus) {
+      async function updateStudentStatus(studentId, newStatus) {
         const session = attendanceData.find((s) => s.id === activeSessionId);
         if (session) {
           const student = session.records.find((r) => r.id === studentId);
           if (student) {
             student.status = newStatus;
-            saveToStorage();
-            selectSession(activeSessionId); // Re-render untuk update angka rekapitulasi
+            selectSession(activeSessionId);
+            await syncToSheet();
           }
         }
       }
 
-      function markAllPresent() {
+      async function markAllPresent() {
         const session = attendanceData.find((s) => s.id === activeSessionId);
         if (session) {
           session.records.forEach((r) => {
             if (!r.status) r.status = "Hadir";
           });
-          saveToStorage();
           selectSession(activeSessionId);
+          await syncToSheet();
         }
       }
 
@@ -452,11 +499,10 @@
         });
       }
 
-      function deleteSession(id) {
+      async function deleteSession(id) {
         if (confirm("Yakin ingin menghapus jurnal & presensi tanggal ini?")) {
           attendanceData = attendanceData.filter((s) => s.id !== id);
           activeSessionId = null;
-          saveToStorage();
           renderSessionList();
           document.getElementById("attendanceDetailPanel").innerHTML = `
           <div class="text-center text-secondary py-5">
@@ -464,14 +510,12 @@
             <p class="mt-2">Pilih atau buat tanggal pertemuan baru di sebelah kiri untuk mengisi presensi.</p>
           </div>
         `;
+          await syncToSheet();
         }
       }
 
-      // Load Pertama
-      renderSessionList();
-      if (attendanceData.length > 0) {
-        selectSession(attendanceData[0].id);
-      }
+      // Ambil data awal saat halaman pertama kali dibuka
+      fetchAttendanceFromSheet();
     </script>
   </body>
 </html>
