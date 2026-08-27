@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Jurnal & Absensi Kelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="shortcut icon" href="images/Logo Patbhe.png" type="image/x-icon" />
+
+    <style>
+      :root {
+        --bg-dark: #0b0f19;
+        --card-bg: rgba(22, 31, 49, 0.7);
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0b0f19 75%);
+        color: #f8fafc;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        min-height: 100vh;
+      }
+
+      .dashboard-header {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+      }
+
+      .card-custom {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+      }
+
+      .form-control-dark {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #fff !important;
+        border-radius: 10px !important;
+      }
+      .form-control-dark::placeholder {
+        color: #64748b;
+      }
+
+      /* Custom Radio Status Absen */
+      .btn-check:checked + .btn-outline-success {
+        background-color: #10b981 !important;
+        color: #fff !important;
+      }
+      .btn-check:checked + .btn-outline-warning {
+        background-color: #f59e0b !important;
+        color: #000 !important;
+      }
+      .btn-check:checked + .btn-outline-info {
+        background-color: #06b6d4 !important;
+        color: #fff !important;
+      }
+      .btn-check:checked + .btn-outline-danger {
+        background-color: #ef4444 !important;
+        color: #fff !important;
+      }
+
+      .table-dark-custom {
+        --bs-table-bg: transparent;
+        --bs-table-color: #f8fafc;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .rekap-card {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 10px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body class="p-3 p-md-4">
+    <div class="container-fluid max-width-xl">
+      <!-- Header -->
+      <div class="dashboard-header p-3 p-md-4 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-lg">
+        <div class="d-flex align-items-center gap-3">
+          <div class="p-3 bg-success bg-opacity-10 text-success rounded-4 border border-success border-opacity-25">
+            <i class="bi bi-calendar-check-fill fs-3"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-0 text-white">Jurnal & Presensi Kelas</h4>
+            <span class="text-secondary small">Rekapitulasi Kehadiran Siswa Per Pertemuan</span>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="index.html" class="btn btn-outline-light rounded-3 py-2 px-3 fw-bold"> <i class="bi bi-arrow-left me-1"></i> Kembali ke Leaderboard </a>
+          <button class="btn btn-success rounded-3 py-2 px-3 fw-bold" onclick="openNewSessionModal()"><i class="bi bi-plus-circle me-1"></i>Pertemuan Baru</button>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Sidebar Daftar Pertemuan -->
+        <div class="col-lg-4">
+          <div class="card-custom p-3 p-md-4">
+            <h6 class="fw-bold text-white mb-3"><i class="bi bi-clock-history text-success me-2"></i>Riwayat Pertemuan</h6>
+            <div class="list-group list-group-flush gap-2" id="sessionList">
+              <!-- List Tanggal dipopulasi via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Absensi Siswa -->
+        <div class="col-lg-8">
+          <div class="card-custom p-3 p-md-4" id="attendanceDetailPanel">
+            <div class="text-center text-secondary py-5">
+              <i class="bi bi-calendar-event fs-1 opacity-50"></i>
+              <p class="mt-2">Pilih atau buat tanggal pertemuan baru di sebelah kiri untuk mengisi presensi.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Tambah Pertemuan Baru -->
+    <div class="modal fade" id="sessionModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-custom p-3 text-white border-0">
+          <div class="modal-header border-0">
+            <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus text-success me-2"></i>Buat Pertemuan Baru</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label text-secondary small fw-bold">Tanggal Pertemuan:</label>
+              <input type="date" id="sessionDate" class="form-control form-control-dark" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-secondary small fw-bold">Materi / Catatan Pertemuan:</label>
+              <input type="text" id="sessionNote" class="form-control form-control-dark" placeholder="Contoh: Pertemuan 1 - Pengenalan Algoritma" />
+            </div>
+            <button class="btn btn-success w-100 fw-bold py-2 rounded-3 mt-2" onclick="saveNewSession()">Mulai Presensi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const sampleNames = [
+        "Ainun Risky",
+        "Alexander Modegliano Biwada",
+        "Arindia Maharani",
+        "Aufa Tazkia Rahmadani",
+        "Cornelia Dwi Arini Puspaningrum",
+        "Dzaki Hammam Ibrahim",
+        "Elena Putri Nareswari",
+        "Fatima Ahzahra",
+        "Freya Gracia",
+        "Gabriel Alvaro Anindito",
+        "Gabriella Braveadonia Valga",
+        "Hubertus Radhitya Melvin",
+        "Isabel Ada Lamont",
+        "Julio Kevin Nugroho",
+        "Justien Pratama Setiawan",
+        "Kesya Hanifah Ufairah",
+        "Kristoforus Arsenio Reswara",
+        "Kumala Devi Andini Setiawan",
+        "Leonardus Evan Syandana Rama",
+        "Lintang Nareswara",
+        "Maria Felicia Nindya Danastri",
+        "Maria Kimiko Ruby Renggawan",
+        "Maria Lethicia Viona",
+        "Muhammad Suttan Fahrezy",
+        "Nadia Az-Zahra",
+        "Narayan itendralay Isyunanto",
+        "Ozzie Mahardika Prabaswara",
+        "Penta Kusuma",
+        "Queen Callysta Eleana",
+        "Queen Gabriella Ginoga",
+        "Rafi Ardan Saputra",
+        "Raihanah Lembayung Indah",
+        "Rayhan Evan Sachio",
+        "Tiara Febriana",
+        "Tsabita Neysa Azalia",
+        "Yunita Putri Prasetiya",
+      ];
+
+      let attendanceData = JSON.parse(localStorage.getItem("class_attendance_journal_v1")) || [];
+      let activeSessionId = null;
+
+      document.getElementById("sessionDate").valueAsDate = new Date();
+
+      function openNewSessionModal() {
+        const modal = new bootstrap.Modal(document.getElementById("sessionModal"));
+        modal.show();
+      }
+
+      function saveNewSession() {
+        const dateVal = document.getElementById("sessionDate").value;
+        const noteVal = document.getElementById("sessionNote").value || "Pertemuan Rutin";
+
+        if (!dateVal) {
+          alert("Harap pilih tanggal pertemuan!");
+          return;
+        }
+
+        const newSession = {
+          id: Date.now(),
+          date: dateVal,
+          note: noteVal,
+          records: sampleNames.map((name, idx) => ({
+            id: idx + 1,
+            name: name,
+            status: "", // Default Kosong (Belum Diabsen)
+          })),
+        };
+
+        attendanceData.unshift(newSession);
+        saveToStorage();
+
+        const modalEl = document.getElementById("sessionModal");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+
+        renderSessionList();
+        selectSession(newSession.id);
+      }
+
+      function saveToStorage() {
+        localStorage.setItem("class_attendance_journal_v1", JSON.stringify(attendanceData));
+      }
+
+      function renderSessionList() {
+        const container = document.getElementById("sessionList");
+        if (attendanceData.length === 0) {
+          container.innerHTML = `<div class="text-secondary small text-center py-3">Belum ada riwayat pertemuan.</div>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        attendanceData.forEach((session) => {
+          const isActive = session.id === activeSessionId;
+          const formattedDate = new Date(session.date).toLocaleDateString("id-ID", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+
+          container.innerHTML += `
+          <button class="list-group-item list-group-item-action bg-dark text-white border-secondary border-opacity-25 rounded-3 p-3 d-flex justify-content-between align-items-center ${isActive ? "active border-success" : ""}" onclick="selectSession(${session.id})">
+            <div>
+              <div class="fw-bold">${formattedDate}</div>
+              <div class="small text-secondary text-truncate" style="max-width: 180px;">${session.note}</div>
+            </div>
+            <i class="bi bi-chevron-right small text-secondary"></i>
+          </button>
+        `;
+        });
+      }
+
+      function selectSession(id) {
+        activeSessionId = id;
+        renderSessionList();
+
+        const session = attendanceData.find((s) => s.id === id);
+        if (!session) return;
+
+        const formattedDate = new Date(session.date).toLocaleDateString("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        // Hitung Rekapitulasi Status
+        const counts = { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0, Belum: 0 };
+        session.records.forEach((r) => {
+          if (counts[r.status] !== undefined) counts[r.status]++;
+          else counts.Belum++;
+        });
+
+        const detailPanel = document.getElementById("attendanceDetailPanel");
+
+        let rowsHTML = session.records
+          .map(
+            (student, idx) => `
+        <tr>
+          <td class="text-secondary small">${idx + 1}</td>
+          <td class="fw-semibold text-white">${student.name}</td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm" role="group">
+              <input type="radio" class="btn-check" name="status_${student.id}" id="h_${student.id}" ${student.status === "Hadir" ? "checked" : ""} onchange="updateStudentStatus(${student.id}, 'Hadir')">
+              <label class="btn btn-outline-success" for="h_${student.id}">Hadir</label>
+
+              <input type="radio" class="btn-check" name="status_${student.id}" id="i_${student.id}" ${student.status === "Izin" ? "checked" : ""} onchange="updateStudentStatus(${student.id}, 'Izin')">
+              <label class="btn btn-outline-warning" for="i_${student.id}">Izin</label>
+
+              <input type="radio" class="btn-check" name="status_${student.id}" id="s_${student.id}" ${student.status === "Sakit" ? "checked" : ""} onchange="updateStudentStatus(${student.id}, 'Sakit')">
+              <label class="btn btn-outline-info" for="s_${student.id}">Sakit</label>
+
+              <input type="radio" class="btn-check" name="status_${student.id}" id="a_${student.id}" ${student.status === "Alpa" ? "checked" : ""} onchange="updateStudentStatus(${student.id}, 'Alpa')">
+              <label class="btn btn-outline-danger" for="a_${student.id}">Alpa</label>
+            </div>
+          </td>
+        </tr>
+      `,
+          )
+          .join("");
+
+        detailPanel.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary border-opacity-25 flex-wrap gap-2">
+          <div>
+            <h5 class="fw-bold text-white mb-0">${formattedDate}</h5>
+            <span class="text-success small fw-semibold">${session.note}</span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-success btn-sm rounded-3" onclick="markAllPresent()">
+              <i class="bi bi-check-all me-1"></i> Semua Hadir
+            </button>
+            <button class="btn btn-outline-info btn-sm rounded-3" onclick="copySummaryText()">
+              <i class="bi bi-share me-1"></i> Salin Rekap
+            </button>
+            <button class="btn btn-outline-danger btn-sm rounded-3" onclick="deleteSession(${session.id})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section Widget Rekapitulasi -->
+        <div class="row g-2 mb-4">
+          <div class="col">
+            <div class="rekap-card border-success border-opacity-25">
+              <div class="small text-success fw-bold">Hadir</div>
+              <div class="fs-4 fw-extrabold text-white">${counts.Hadir}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="rekap-card border-warning border-opacity-25">
+              <div class="small text-warning fw-bold">Izin</div>
+              <div class="fs-4 fw-extrabold text-white">${counts.Izin}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="rekap-card border-info border-opacity-25">
+              <div class="small text-info fw-bold">Sakit</div>
+              <div class="fs-4 fw-extrabold text-white">${counts.Sakit}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="rekap-card border-danger border-opacity-25">
+              <div class="small text-danger fw-bold">Alpa</div>
+              <div class="fs-4 fw-extrabold text-white">${counts.Alpa}</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="rekap-card border-secondary border-opacity-25">
+              <div class="small text-secondary fw-bold">Belum Diabsen</div>
+              <div class="fs-4 fw-extrabold text-white">${counts.Belum}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-dark-custom align-middle">
+            <thead>
+              <tr class="text-secondary small">
+                <th style="width: 40px;">No</th>
+                <th>Nama Murid</th>
+                <th class="text-end">Status Kehadiran</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHTML}
+            </tbody>
+          </table>
+        </div>
+      `;
+      }
+
+      function updateStudentStatus(studentId, newStatus) {
+        const session = attendanceData.find((s) => s.id === activeSessionId);
+        if (session) {
+          const student = session.records.find((r) => r.id === studentId);
+          if (student) {
+            student.status = newStatus;
+            saveToStorage();
+            selectSession(activeSessionId); // Re-render untuk update angka rekapitulasi
+          }
+        }
+      }
+
+      function markAllPresent() {
+        const session = attendanceData.find((s) => s.id === activeSessionId);
+        if (session) {
+          session.records.forEach((r) => {
+            if (!r.status) r.status = "Hadir";
+          });
+          saveToStorage();
+          selectSession(activeSessionId);
+        }
+      }
+
+      function copySummaryText() {
+        const session = attendanceData.find((s) => s.id === activeSessionId);
+        if (!session) return;
+
+        const formattedDate = new Date(session.date).toLocaleDateString("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        const counts = { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0, Belum: 0 };
+        const nonHadirList = [];
+
+        session.records.forEach((r) => {
+          if (r.status === "Hadir") counts.Hadir++;
+          else if (r.status === "Izin") {
+            counts.Izin++;
+            nonHadirList.push(`- ${r.name} (Izin)`);
+          } else if (r.status === "Sakit") {
+            counts.Sakit++;
+            nonHadirList.push(`- ${r.name} (Sakit)`);
+          } else if (r.status === "Alpa") {
+            counts.Alpa++;
+            nonHadirList.push(`- ${r.name} (Alpa)`);
+          } else {
+            counts.Belum++;
+          }
+        });
+
+        let text = `*REKAP PRESENSI KELAS*\n`;
+        text += `Tanggal: ${formattedDate}\n`;
+        text += `Materi: ${session.note}\n\n`;
+        text += `*Ringkasan:*\n`;
+        text += `✅ Hadir: ${counts.Hadir}\n`;
+        text += `🟡 Izin: ${counts.Izin}\n`;
+        text += `🔵 Sakit: ${counts.Sakit}\n`;
+        text += `🔴 Alpa: ${counts.Alpa}\n`;
+        if (counts.Belum > 0) text += `⚪ Belum Diabsen: ${counts.Belum}\n`;
+
+        if (nonHadirList.length > 0) {
+          text += `\n*Daftar Siswa Tidak Hadir:*\n` + nonHadirList.join("\n");
+        }
+
+        navigator.clipboard.writeText(text).then(() => {
+          alert("Rekap absensi berhasil disalin ke clipboard! Siap ditempel ke WhatsApp.");
+        });
+      }
+
+      function deleteSession(id) {
+        if (confirm("Yakin ingin menghapus jurnal & presensi tanggal ini?")) {
+          attendanceData = attendanceData.filter((s) => s.id !== id);
+          activeSessionId = null;
+          saveToStorage();
+          renderSessionList();
+          document.getElementById("attendanceDetailPanel").innerHTML = `
+          <div class="text-center text-secondary py-5">
+            <i class="bi bi-calendar-event fs-1 opacity-50"></i>
+            <p class="mt-2">Pilih atau buat tanggal pertemuan baru di sebelah kiri untuk mengisi presensi.</p>
+          </div>
+        `;
+        }
+      }
+
+      // Load Pertama
+      renderSessionList();
+      if (attendanceData.length > 0) {
+        selectSession(attendanceData[0].id);
+      }
+    </script>
+  </body>
+</html>

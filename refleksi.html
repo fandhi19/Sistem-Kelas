@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Refleksi Pembelajaran - Exit Ticket 3-2-1</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="shortcut icon" href="images/Logo Patbhe.png" type="image/x-icon" />
+
+    <style>
+      :root {
+        --bg-dark: #0b0f19;
+        --card-bg: rgba(22, 31, 49, 0.7);
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0b0f19 75%);
+        color: #f8fafc;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        min-height: 100vh;
+      }
+
+      .dashboard-header,
+      .card-custom {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+      }
+
+      /* Perbaikan Input & Select Field */
+      .form-control-dark,
+      .form-select-dark {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #fff !important;
+        border-radius: 10px !important;
+      }
+
+      /* Styling khusus opsi dropdown agar tidak bentrok dengan background putih browser */
+      .form-select-dark option {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        padding: 10px;
+      }
+
+      .form-control-dark:focus,
+      .form-select-dark:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+      }
+
+      .form-control-dark::placeholder {
+        color: #64748b;
+      }
+
+      .badge-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+
+      .nav-pills .nav-link {
+        color: #94a3b8;
+        border-radius: 10px;
+      }
+
+      .nav-pills .nav-link.active {
+        background-color: #10b981;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body class="p-3 p-md-4">
+    <div class="container-fluid max-width-xl">
+      <!-- Header -->
+      <div class="dashboard-header p-3 p-md-4 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-lg">
+        <div class="d-flex align-items-center gap-3">
+          <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-4 border border-warning border-opacity-25">
+            <i class="bi bi-journal-check fs-3"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-0 text-white">Exit Ticket 3-2-1</h4>
+            <span class="text-secondary small">Refleksi Akhir Pembelajaran Hari Ini</span>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="index.html" class="btn btn-outline-light rounded-3 py-2 px-3 fw-bold"> <i class="bi bi-arrow-left me-1"></i> Kembali </a>
+        </div>
+      </div>
+
+      <!-- Tab Navigasi Mode Siswa / Guru -->
+      <ul class="nav nav-pills mb-4 gap-2" id="pills-tab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-bold" id="tab-siswa" data-bs-toggle="pill" data-bs-target="#content-siswa" type="button"><i class="bi bi-pencil-square me-1"></i> Form Refleksi Siswa</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-bold" id="tab-guru" data-bs-toggle="pill" data-bs-target="#content-guru" type="button" onclick="renderRekapGuru()"><i class="bi bi-card-heading me-1"></i> Rekap Refleksi (Guru)</button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="pills-tabContent">
+        <!-- TAMPILAN 1: FORM INPUT SISWA -->
+        <div class="tab-pane fade show active" id="content-siswa" role="tabpanel">
+          <div class="row justify-content-center">
+            <div class="col-lg-9">
+              <div class="card-custom p-4">
+                <form id="refleksiForm" onsubmit="submitRefleksi(event)">
+                  <!-- Identitas & Pertemuan Input Manual -->
+                  <div class="row g-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div class="col-md-7">
+                      <label class="form-label text-white fw-bold">Pilih Nama Kamu:</label>
+                      <select id="studentName" class="form-select form-select-dark py-2" required>
+                        <option value="" selected disabled>-- Pilih Nama dari Daftar --</option>
+                      </select>
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label text-white fw-bold">Pertemuan Ke-:</label>
+                      <input type="text" id="meetingNumber" class="form-control form-control-dark py-2" placeholder="Contoh: Pertemuan 1 / P1" required />
+                    </div>
+                  </div>
+
+                  <!-- Bagian 3 Hal Baru -->
+                  <div class="mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                      <span class="badge-number bg-success text-white">3</span>
+                      <h6 class="fw-bold text-white mb-0">Hal baru yang kamu pelajari hari ini</h6>
+                    </div>
+                    <div class="d-flex flex-column gap-2 ms-md-4">
+                      <input type="text" class="form-control form-control-dark" id="new1" placeholder="1. Poin pertama..." required />
+                      <input type="text" class="form-control form-control-dark" id="new2" placeholder="2. Poin kedua..." required />
+                      <input type="text" class="form-control form-control-dark" id="new3" placeholder="3. Poin ketiga..." required />
+                    </div>
+                  </div>
+
+                  <!-- Bagian 2 Hal Menarik -->
+                  <div class="mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                      <span class="badge-number bg-warning text-dark">2</span>
+                      <h6 class="fw-bold text-white mb-0">Hal menarik atau yang paling kamu sukai</h6>
+                    </div>
+                    <div class="d-flex flex-column gap-2 ms-md-4">
+                      <input type="text" class="form-control form-control-dark" id="fav1" placeholder="1. Hal menarik pertama..." required />
+                      <input type="text" class="form-control form-control-dark" id="fav2" placeholder="2. Hal menarik kedua..." required />
+                    </div>
+                  </div>
+
+                  <!-- Bagian 1 Pertanyaan -->
+                  <div class="mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                      <span class="badge-number bg-danger text-white">1</span>
+                      <h6 class="fw-bold text-white mb-0">Pertanyaan yang masih membuatmu bingung / belum dipahami</h6>
+                    </div>
+                    <div class="ms-md-4">
+                      <textarea class="form-control form-control-dark" id="question1" rows="2" placeholder="Tuliskan pertanyaanmu di sini (atau ketik 'Tidak ada' jika sudah paham)..." required></textarea>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-success w-100 fw-bold py-2.5 rounded-3 mt-3"><i class="bi bi-send me-1"></i> Kirim Refleksi Hari Ini</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAMPILAN 2: REKAP HASIL (UNTUK GURU) -->
+        <div class="tab-pane fade" id="content-guru" role="tabpanel">
+          <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+              <div>
+                <h5 class="fw-bold text-white mb-0">Hasil Refleksi Murid</h5>
+                <span class="text-secondary small">Daftar respon Exit Ticket 3-2-1 yang masuk</span>
+              </div>
+
+              <!-- Pencarian/Filter Pertemuan & Tombol Hapus -->
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <input type="text" id="searchMeeting" class="form-control form-control-dark py-1.5 px-3" style="width: 200px" placeholder="Cari Pertemuan..." onkeyup="renderRekapGuru()" />
+                <button class="btn btn-outline-danger btn-sm rounded-3 py-2 px-3" onclick="clearAllRefleksi()"><i class="bi bi-trash me-1"></i> Kosongkan Rekap</button>
+              </div>
+            </div>
+
+            <div id="rekapContainer" class="row g-3">
+              <!-- Cards Respon Murid dipopulasi via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const sampleNames = [
+        "Ainun Risky",
+        "Alexander Modegliano Biwada",
+        "Arindia Maharani",
+        "Aufa Tazkia Rahmadani",
+        "Cornelia Dwi Arini Puspaningrum",
+        "Dzaki Hammam Ibrahim",
+        "Elena Putri Nareswari",
+        "Fatima Ahzahra",
+        "Freya Gracia",
+        "Gabriel Alvaro Anindito",
+        "Gabriella Braveadonia Valga",
+        "Hubertus Radhitya Melvin",
+        "Isabel Ada Lamont",
+        "Julio Kevin Nugroho",
+        "Justien Pratama Setiawan",
+        "Kesya Hanifah Ufairah",
+        "Kristoforus Arsenio Reswara",
+        "Kumala Devi Andini Setiawan",
+        "Leonardus Evan Syandana Rama",
+        "Lintang Nareswara",
+        "Maria Felicia Nindya Danastri",
+        "Maria Kimiko Ruby Renggawan",
+        "Maria Lethicia Viona",
+        "Muhammad Suttan Fahrezy",
+        "Nadia Az-Zahra",
+        "Narayan itendralay Isyunanto",
+        "Ozzie Mahardika Prabaswara",
+        "Penta Kusuma",
+        "Queen Callysta Eleana",
+        "Queen Gabriella Ginoga",
+        "Rafi Ardan Saputra",
+        "Raihanah Lembayung Indah",
+        "Rayhan Evan Sachio",
+        "Tiara Febriana",
+        "Tsabita Neysa Azalia",
+        "Yunita Putri Prasetiya",
+      ];
+
+      // Populate Dropdown Nama Siswa
+      const studentSelect = document.getElementById("studentName");
+      sampleNames.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        studentSelect.appendChild(opt);
+      });
+
+      // Storage Key
+      const STORAGE_KEY = "class_exit_tickets_v1";
+
+      function getRefleksiData() {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      }
+
+      function submitRefleksi(e) {
+        e.preventDefault();
+
+        const name = document.getElementById("studentName").value;
+        const meeting = document.getElementById("meetingNumber").value;
+        const new1 = document.getElementById("new1").value;
+        const new2 = document.getElementById("new2").value;
+        const new3 = document.getElementById("new3").value;
+        const fav1 = document.getElementById("fav1").value;
+        const fav2 = document.getElementById("fav2").value;
+        const question = document.getElementById("question1").value;
+
+        const newEntry = {
+          id: Date.now(),
+          timestamp: new Date().toLocaleString("id-ID"),
+          name: name,
+          meeting: meeting,
+          learned: [new1, new2, new3],
+          liked: [fav1, fav2],
+          question: question,
+        };
+
+        const existingData = getRefleksiData();
+        existingData.unshift(newEntry);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(existingData));
+
+        alert(`Terima kasih, refleksi untuk ${meeting} kamu berhasil terkirim!`);
+        document.getElementById("refleksiForm").reset();
+      }
+
+      function renderRekapGuru() {
+        const container = document.getElementById("rekapContainer");
+        const searchText = document.getElementById("searchMeeting").value.toLowerCase().trim();
+        let data = getRefleksiData();
+
+        if (searchText !== "") {
+          data = data.filter((item) => item.meeting && item.meeting.toLowerCase().includes(searchText));
+        }
+
+        if (data.length === 0) {
+          container.innerHTML = `<div class="text-secondary text-center py-5">Belum ada data refleksi yang sesuai.</div>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        data.forEach((item) => {
+          container.innerHTML += `
+            <div class="col-md-6 col-lg-4">
+              <div class="card-custom p-3 h-100 border border-secondary border-opacity-25">
+                <div class="d-flex justify-content-between align-items-start mb-2 border-bottom border-secondary border-opacity-25 pb-2">
+                  <div>
+                    <h6 class="fw-bold text-white mb-0">${item.name}</h6>
+                    <small class="text-secondary" style="font-size: 0.75rem;">${item.timestamp}</small>
+                  </div>
+                  <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25">${item.meeting || "Pertemuan -"}</span>
+                </div>
+
+                <div class="mb-2">
+                  <span class="badge bg-success text-white mb-1">3 Hal Dipelajari</span>
+                  <ul class="small text-light ps-3 mb-0">
+                    <li>${item.learned[0]}</li>
+                    <li>${item.learned[1]}</li>
+                    <li>${item.learned[2]}</li>
+                  </ul>
+                </div>
+
+                <div class="mb-2">
+                  <span class="badge bg-warning text-dark mb-1">2 Hal Disukai</span>
+                  <ul class="small text-light ps-3 mb-0">
+                    <li>${item.liked[0]}</li>
+                    <li>${item.liked[1]}</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <span class="badge bg-danger text-white mb-1">1 Pertanyaan</span>
+                  <p class="small text-light fst-italic ps-1 mb-0">"${item.question}"</p>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      function clearAllRefleksi() {
+        if (confirm("Yakin ingin menghapus semua rekap refleksi?")) {
+          localStorage.removeItem(STORAGE_KEY);
+          renderRekapGuru();
+        }
+      }
+    </script>
+  </body>
+</html>
