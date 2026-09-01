@@ -110,84 +110,112 @@
         padding: 10px;
       }
 
-      /* Grid Siswa */
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-        gap: 20px;
-      }
-
-      .student-card {
+      /* Styling Tabel Murid */
+      .custom-table-card {
         background: var(--card-bg);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 20px;
-        transition: all 0.25s ease;
+        overflow: hidden;
       }
 
-      .student-card:hover {
-        transform: translateY(-4px);
-        border-color: rgba(59, 130, 246, 0.4);
+      .table-dark-custom {
+        --bs-table-bg: transparent;
+        --bs-table-color: #f8fafc;
+        margin-bottom: 0;
+      }
+
+      .table-dark-custom th {
+        background: rgba(30, 41, 59, 0.8);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+        padding: 16px;
+      }
+
+      .table-dark-custom td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 12px 16px;
+        vertical-align: middle;
+      }
+
+      .table-dark-custom tbody tr:hover {
+        background: rgba(255, 255, 255, 0.03);
       }
 
       .student-avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
         background: linear-gradient(135deg, #3b82f6, #06b6d4);
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
         color: #fff;
+        font-size: 0.85rem;
       }
 
-      .point-display {
-        font-size: 2.8rem;
+      .point-badge {
+        font-size: 1.1rem;
         font-weight: 800;
-        background: linear-gradient(180deg, #ffffff 30%, #94a3b8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        line-height: 1;
+        padding: 4px 12px;
+        border-radius: 8px;
+        display: inline-block;
+        min-width: 60px;
+      }
+
+      .point-positive {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .point-negative {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .point-zero {
+        background: rgba(148, 163, 184, 0.15);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.3);
       }
 
       .btn-action {
         border: none;
-        border-radius: 10px;
+        border-radius: 8px;
         font-weight: 700;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         transition: all 0.15s ease;
       }
+
       .btn-minus {
         background: rgba(239, 68, 68, 0.15);
         color: #ef4444;
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
       }
       .btn-minus:hover {
         background: #ef4444;
         color: #fff;
       }
+
       .btn-plus-1 {
         background: rgba(59, 130, 246, 0.15);
         color: #60a5fa;
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
       }
       .btn-plus-1:hover {
         background: #3b82f6;
         color: #fff;
-      }
-      .btn-plus-5 {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: #fff;
-        padding: 0 14px;
-        height: 36px;
-      }
-      .btn-plus-5:hover {
-        transform: scale(1.05);
       }
 
       /* Modal Styling */
@@ -269,10 +297,27 @@
       <!-- Top 3 Podium Section -->
       <div class="podium-container" id="podiumSection"></div>
 
-      <!-- Grid Seluruh Siswa -->
+      <!-- Tabel Seluruh Murid -->
       <h6 class="text-secondary fw-bold text-uppercase mb-3 tracking-wider"><i class="bi bi-people-fill me-2"></i>Daftar Seluruh Murid</h6>
-      <div class="grid-container" id="studentGrid">
-        <div class="text-info text-center py-5 w-100 col-span-full"><span class="spinner-border spinner-border-sm me-2"></span>Memuat data dari Google Sheets...</div>
+
+      <div class="custom-table-card shadow-lg mb-4">
+        <div class="table-responsive">
+          <table class="table table-dark-custom align-middle">
+            <thead>
+              <tr>
+                <th style="width: 80px" class="text-center">No</th>
+                <th>Nama Murid</th>
+                <th style="width: 150px" class="text-center">Poin</th>
+                <th style="width: 140px" class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody">
+              <tr>
+                <td colspan="4" class="text-info text-center py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat data dari Google Sheets...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -468,7 +513,7 @@
           syncStatus.innerHTML = `<i class="bi bi-exclamation-triangle text-danger me-1"></i> Gagal Sinkronisasi`;
         } finally {
           renderPodium();
-          renderGrid(getFilteredData());
+          renderTable(getFilteredData());
         }
       }
 
@@ -515,52 +560,59 @@
         <div class="podium-card rank-2">
           <div class="badge-icon badge-2"><i class="bi bi-award-fill"></i></div>
           <span class="badge bg-secondary mb-2">PODIUM 2</span>
-          <h5 class="fw-bold text-white mb-1 text-truncate">${top2 && top2.points > 0 ? top2.name : "-"}</h5>
-          <div class="fs-3 fw-extrabold text-info">${top2 && top2.points > 0 ? top2.points : 0} <span class="fs-6 text-secondary">Pts</span></div>
+          <h5 class="fw-bold text-white mb-1 text-truncate">${top2 ? top2.name : "-"}</h5>
+          <div class="fs-3 fw-extrabold text-info">${top2 ? top2.points : 0} <span class="fs-6 text-secondary">Pts</span></div>
         </div>
 
         <div class="podium-card rank-1">
           <div class="badge-icon badge-1"><i class="bi bi-trophy-fill"></i></div>
           <span class="badge bg-warning text-dark mb-2 fw-bold">👑 PODIUM 1</span>
-          <h4 class="fw-bold text-white mb-1 text-truncate">${top1 && top1.points > 0 ? top1.name : "-"}</h4>
-          <div class="fs-2 fw-extrabold text-warning">${top1 && top1.points > 0 ? top1.points : 0} <span class="fs-6 text-secondary">Pts</span></div>
+          <h4 class="fw-bold text-white mb-1 text-truncate">${top1 ? top1.name : "-"}</h4>
+          <div class="fs-2 fw-extrabold text-warning">${top1 ? top1.points : 0} <span class="fs-6 text-secondary">Pts</span></div>
         </div>
 
         <div class="podium-card rank-3">
           <div class="badge-icon badge-3"><i class="bi bi-award-fill"></i></div>
           <span class="badge bg-dark mb-2">PODIUM 3</span>
-          <h5 class="fw-bold text-white mb-1 text-truncate">${top3 && top3.points > 0 ? top3.name : "-"}</h5>
-          <div class="fs-3 fw-extrabold text-warning-emphasis">${top3 && top3.points > 0 ? top3.points : 0} <span class="fs-6 text-secondary">Pts</span></div>
+          <h5 class="fw-bold text-white mb-1 text-truncate">${top3 ? top3.name : "-"}</h5>
+          <div class="fs-3 fw-extrabold text-warning-emphasis">${top3 ? top3.points : 0} <span class="fs-6 text-secondary">Pts</span></div>
         </div>
       `;
       }
 
-      function renderGrid(data = students) {
-        const grid = document.getElementById("studentGrid");
-        grid.innerHTML = "";
+      function renderTable(data = students) {
+        const tbody = document.getElementById("studentTableBody");
+        tbody.innerHTML = "";
+
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="text-center text-secondary py-4">Data tidak ditemukan.</td></tr>`;
+          return;
+        }
 
         data.forEach((student) => {
-          grid.innerHTML += `
-          <div class="student-card p-3 d-flex flex-column justify-content-between">
-            <div class="d-flex align-items-center gap-3 mb-2">
-              <div class="student-avatar">${getInitials(student.name)}</div>
-              <div class="overflow-hidden">
-                <div class="text-secondary small fw-semibold">#${String(student.id).padStart(2, "0")}</div>
-                <h6 class="fw-bold text-white mb-0 text-truncate" title="${student.name}">${student.name}</h6>
+          let pointClass = "point-zero";
+          if (student.points > 0) pointClass = "point-positive";
+          else if (student.points < 0) pointClass = "point-negative";
+
+          tbody.innerHTML += `
+          <tr>
+            <td class="text-center text-secondary fw-semibold">#${String(student.id).padStart(2, "0")}</td>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div class="student-avatar">${getInitials(student.name)}</div>
+                <div class="fw-bold text-white">${student.name}</div>
               </div>
-            </div>
-
-            <div class="text-center my-2">
-              <div class="point-display">${student.points}</div>
-              <span class="text-secondary small fw-semibold text-uppercase">Points</span>
-            </div>
-
-            <div class="d-flex justify-content-center gap-2 mt-2">
-              <button class="btn-action btn-minus" onclick="updatePoint(${student.id}, -1)">-1</button>
-              <button class="btn-action btn-plus-1" onclick="updatePoint(${student.id}, 1)">+1</button>
-              <button class="btn-action btn-plus-5" onclick="updatePoint(${student.id}, 5)">+5</button>
-            </div>
-          </div>
+            </td>
+            <td class="text-center">
+              <span class="point-badge ${pointClass}">${student.points}</span>
+            </td>
+            <td class="text-center">
+              <div class="d-flex justify-content-center gap-2">
+                <button class="btn-action btn-minus" onclick="updatePoint(${student.id}, -1)" title="Kurang 1 Poin">-1</button>
+                <button class="btn-action btn-plus-1" onclick="updatePoint(${student.id}, 1)" title="Tambah 1 Poin">+1</button>
+              </div>
+            </td>
+          </tr>
         `;
         });
       }
@@ -568,11 +620,12 @@
       function updatePoint(id, change) {
         const student = students.find((s) => s.id === id);
         if (student) {
-          student.points = Math.max(0, student.points + change);
+          // Memungkinkan poin bernilai negatif tanpa Math.max(0, ...)
+          student.points += change;
 
           playSound(change < 0 ? "minus" : "plus");
           renderPodium();
-          renderGrid(getFilteredData());
+          renderTable(getFilteredData());
 
           // Kirim perubahan poin secara background ke Google Sheets
           updatePointOnSheet(student);
@@ -723,14 +776,14 @@
       }
 
       function filterStudents() {
-        renderGrid(getFilteredData());
+        renderTable(getFilteredData());
       }
 
       async function resetPoints() {
         if (confirm("Reset semua poin ke 0?")) {
           students.forEach((s) => (s.points = 0));
           renderPodium();
-          renderGrid();
+          renderTable();
           await syncAllToSheet(students);
         }
       }
